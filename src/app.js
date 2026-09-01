@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import errorHandler from './middleware/error.handler.js';
 import postsRoutes from './modules/posts/posts.routes.js';
+import usersRoutes from './modules/users/user.routes.js';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 
 // routes
 app.use('/api/posts', postsRoutes);
+app.use('/api/users', usersRoutes);
 
 
 app.use((req, res, next) => {

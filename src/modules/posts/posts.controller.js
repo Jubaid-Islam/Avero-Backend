@@ -12,7 +12,7 @@ import {
 // handle new post
 const createPost = async (req, res, next) => {
   try {
-    const post = await createPostService(req.user, req.body.text, req.file);
+    const post = await createPostService(req.user, req.body.content, req.file);
     res.status(201).json(post);
 
   } catch (error) {

@@ -1,4 +1,4 @@
-import admin from '../config/firebase.js';
+import { adminAuth } from '../config/firebase.js';
 import User from '../modules/users/user.model.js';
 
 
@@ -13,7 +13,7 @@ const authMiddleware = async (req, res, next) => {
 
     try {
         // verify token
-        const decodedToken = await admin.auth().verifyIdToken(token);
+        const decodedToken = await adminAuth.verifyIdToken(token);
 
         let user = await User.findOne({ firebaseUid: decodedToken.uid });
 
