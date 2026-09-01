@@ -99,7 +99,7 @@ const toggleLikeService = async (postId, user) => {
     post.likesCount = post.likes.length;
     await post.save();
 
-    return { likesCount: post.likesCount, isLiked };
+    return { likesCount: post.likesCount, isLiked, likes: post.likes };
 }
 
 
@@ -128,7 +128,9 @@ const addCommentService = async (postId, user, text) => {
     post.commentsCount = post.comments.length;
     await post.save();
 
-    return post;
+    return {commentsCount: post.commentsCount,
+        comments: post.comments
+     };
 
 }
 
