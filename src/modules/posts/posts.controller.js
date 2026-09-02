@@ -5,6 +5,7 @@ import {
   toggleLikeService,
   addCommentService,
   deletePostService,
+  getPostLikesService,
 } from './post.service.js';
 
 
@@ -29,7 +30,7 @@ const getPosts = async (req, res, next) => {
     const cursor = req.query.cursor || null;
     const limit = parseInt(req.query.limit, 10) || 10;
 
-    const result = await getPostsService(cursor, limit);
+    const result = await getPostsService(cursor, limit, req.user?.id);
 
     res.status(200).json(result);
 
@@ -41,16 +42,24 @@ const getPosts = async (req, res, next) => {
 
 
 
-// get a post details by userid
+// get post details by post id
 const getPostById = async (req, res, next) => {
   try {
-    const post = await getPostByIdService(req.params.id);
-    res.status(200).json(post);
+    const post = await getPostByIdService(
+      req.params.id,
+      req.user.id
+    );
 
+    res.status(200).json(post);
   } catch (error) {
+    if (error.message === 'Post not found') {
+      return res.status(404).json({
+        message: error.message,
+      });
+    }
+
     next(error);
   }
-
 };
 
 
@@ -64,9 +73,16 @@ const toggleLike = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-
 };
 
+const getPostLikes = async (req, res) => {
+  try {
+    const result = await getPostLikesService(req.params.id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
 
 
 // handles adding a comment to a post
@@ -101,6 +117,7 @@ export {
   createPost,
   getPosts,
   getPostById,
+  getPostLikes,
   toggleLike,
   addComment,
   deletePost,

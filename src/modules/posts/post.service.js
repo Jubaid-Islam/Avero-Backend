@@ -22,6 +22,7 @@ const createPostService = async (user, text, file) => {
     return await Post.create({
         userId: user.id,
         username: user.username,
+        email: user.email,
         text: text || '',
         imageUrl,
         publicId,
@@ -30,19 +31,19 @@ const createPostService = async (user, text, file) => {
 }
 
 
-
-// get post by descending
-const getPostsService = async (cursor = null, limit) => {
+// get posts by descending
+const getPostsService = async (cursor = null, limit, currentUserId) => {
     const query = cursor ? {
         _id: { $lt: cursor } // old post
     } : {};
 
     const posts = await Post.find(query)
-        .sort({ _id: -1 })   // old to new
+        .sort({ _id: -1 })   // new to old
         .limit(limit + 1);
 
     const hasMore = posts.length > limit;
     if (hasMore) posts.pop();  // remove the 11th post
+
 
     const nextCursor = posts.length > 0
         ? posts[posts.length - 1]._id
@@ -59,49 +60,83 @@ const getPostsService = async (cursor = null, limit) => {
 
 
 // get single post
-const getPostByIdService = async (postId) => {
-    const post = await Post.findById(postId);
+const getPostByIdService = async (postId, userId) => {
+    const post = await Post.findById(postId).lean();
+
     if (!post) {
-        throw new Error('post not found');
+        throw new Error('Post not found');
     }
-    return post;
+
+    const isLiked = post.likes.some(
+        (like) => like.userId.toString() === userId.toString()
+    );
+    const isOwner = post.userId.toString() === userId.toString();
+
+    return {
+        ...post,
+        isLiked,
+        isOwner,
+        likesCount: post.likesCount,
+    };
 };
 
 
 
-// like status for user
+// like status for user 
 const toggleLikeService = async (postId, user) => {
-    const post = await Post.findById(postId);
+
+    // প্রথমে try করি unlike করতে (যদি আগে থেকে লাইক করা থাকে)
+    const unlikedPost = await Post.findOneAndUpdate(
+        { _id: postId, 'likes.userId': user.id }, // condition: লাইক আগে থেকেই আছে
+        {
+            $pull: { likes: { userId: user.id } },
+            $inc: { likesCount: -1 }
+        },
+        { new: true }
+    );
+
+    if (unlikedPost) {
+        // ম্যাচ পাওয়া গেছে মানে আগে লাইক করা ছিল, এখন আনলাইক হয়ে গেছে
+        return {
+            isLiked: false,
+            likesCount: unlikedPost.likesCount,
+        };
+    }
+
+    // এখানে আসলে বুঝি আগে লাইক করা ছিল না, তাই এখন লাইক করার চেষ্টা করি
+    const likedPost = await Post.findOneAndUpdate(
+        { _id: postId, 'likes.userId': { $ne: user.id } }, // condition: এখনো লাইক নাই
+        {
+            $addToSet: { likes: { userId: user.id, username: user.username } },
+            $inc: { likesCount: 1 }
+        },
+        { new: true }
+    );
+
+    if (!likedPost) {
+        // দুটো condition-ই fail করলে মানে পোস্ট নাই
+        throw new Error('Post not found');
+    }
+
+    return {
+        isLiked: true,
+        likesCount: likedPost.likesCount,
+    };
+};
+
+
+const getPostLikesService = async (postId) => {
+    const post = await Post.findById(postId).select('likes likesCount');
 
     if (!post) {
         throw new Error('post not found');
     }
 
-    const alreadyLikedIndex = post.likes.findIndex((like) =>
-        like.userId.equals(user.id)  // if false then findindex = -1
-    );
-
-    let isLiked = false;
-
-    // if true then remove like from the post.likes array
-    if (alreadyLikedIndex > -1) {
-        post.likes.splice(alreadyLikedIndex, 1);
-
-    }
-    else {
-        post.likes.push({
-            userId: user.id,
-            username: user.username
-        });
-        isLiked = true;
-    }
-
-    post.likesCount = post.likes.length;
-    await post.save();
-
-    return { likesCount: post.likesCount, isLiked, likes: post.likes };
-}
-
+    return {
+        likes: post.likes,
+        likesCount: post.likesCount,
+    };
+};
 
 
 // add comment to the target post
@@ -128,9 +163,10 @@ const addCommentService = async (postId, user, text) => {
     post.commentsCount = post.comments.length;
     await post.save();
 
-    return {commentsCount: post.commentsCount,
+    return {
+        commentsCount: post.commentsCount,
         comments: post.comments
-     };
+    };
 
 }
 
@@ -165,6 +201,7 @@ export {
     getPostsService,
     getPostByIdService,
     toggleLikeService,
+    getPostLikesService,
     addCommentService,
     deletePostService,
 };

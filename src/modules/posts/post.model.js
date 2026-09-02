@@ -13,6 +13,15 @@ const postSchema = new mongoose.Schema({
         required: true,
     },
 
+
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+    },
+
     text: {
         type: String,
         trim: true,
