@@ -85,36 +85,47 @@ const getPostByIdService = async (postId, userId) => {
 // like status for user 
 const toggleLikeService = async (postId, user) => {
 
-    // প্রথমে try করি unlike করতে (যদি আগে থেকে লাইক করা থাকে)
+    // unlike user function
     const unlikedPost = await Post.findOneAndUpdate(
-        { _id: postId, 'likes.userId': user.id }, // condition: লাইক আগে থেকেই আছে
+        {
+            _id: postId,
+            'likes.userId': user.id
+        },
+
         {
             $pull: { likes: { userId: user.id } },
             $inc: { likesCount: -1 }
         },
+
         { new: true }
     );
 
-    if (unlikedPost) {
-        // ম্যাচ পাওয়া গেছে মানে আগে লাইক করা ছিল, এখন আনলাইক হয়ে গেছে
+   
+    if (unlikedPost) {      // if user exist then unlike
         return {
             isLiked: false,
             likesCount: unlikedPost.likesCount,
         };
     }
 
-    // এখানে আসলে বুঝি আগে লাইক করা ছিল না, তাই এখন লাইক করার চেষ্টা করি
+
+    // if user not exist then like
     const likedPost = await Post.findOneAndUpdate(
-        { _id: postId, 'likes.userId': { $ne: user.id } }, // condition: এখনো লাইক নাই
+        {
+            _id: postId,
+            'likes.userId': { $ne: user.id }
+        },
+
         {
             $addToSet: { likes: { userId: user.id, username: user.username } },
             $inc: { likesCount: 1 }
         },
+
         { new: true }
     );
 
+    
     if (!likedPost) {
-        // দুটো condition-ই fail করলে মানে পোস্ট নাই
         throw new Error('Post not found');
     }
 
