@@ -1,3 +1,5 @@
+### Frontend Repository : https://github.com/Jubaid-Islam/Avero-Frontend
+
 # Avero - Backend API
 
 A robust, secure, and scalable RESTful API built with Node.js, Express, and MongoDB to power the Avero social media ecosystem.
@@ -30,23 +32,22 @@ Ensure you have the following installed on your environment:
 
 ### Installation
 
-1. Clone the repository:
-   git clone https://github.com/your-username/avero-backend.git
 
-2. Navigate to the project directory:
-   cd avero-backend
-
-3. Install dependencies:
+1. Install dependencies:
    npm install
 
-4. Environment Configuration:
+2. Environment Configuration:
    Create a `.env` file in the root directory and configure the following variables:
    
-   PORT=5000
-   MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/avero
-   JWT_SECRET=your_jwt_secret_key
+   - PORT=5000
+   - MONGO_URI=
+   - FRONTEND_URL=http://loclhost:5173
+   - CLOUDINARY_CLOUD_NAME=
+   - CLOUDINARY_API_KEY=
+   - CLOUDINARY_API_SECRET=
+   - SERVICE_ACCOUNT_KEY=
 
-5. Start the server:
+3. Start the server:
 
    Development mode (with auto-reload):
    npm run dev
